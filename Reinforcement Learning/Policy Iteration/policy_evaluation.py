@@ -22,6 +22,7 @@ def policy_evaluation(policy, env, gamma = 1.0, theta = 0.00001):
             break
     return np.array(V)
 
-random_policy = np.ones([env.nS, env.nA]) / env.nA
-v = policy_evaluation(random_policy, env)
-print(v)
+if __name__ == '__main__':
+    random_policy = np.ones([env.nS, env.nA]) / env.nA
+    v = policy_evaluation(random_policy, env)
+    print(v)
