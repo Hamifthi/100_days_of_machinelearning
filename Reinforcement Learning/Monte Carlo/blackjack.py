@@ -1,15 +1,15 @@
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 env = gym.make('Blackjack-v0')
 
 def monte_carlo_prediction(policy, env, num_episodes, discount_factor = 1.0):
     policy = policy
-    V = []
-    return_sum = []
-    return_count = []
-    states_list  = []
+    V = defaultdict(float)
+    return_sum = defaultdict(float)
+    return_count = defaultdict(float)
 
     for episode in range(num_episodes):
         states = []
@@ -30,18 +30,13 @@ def monte_carlo_prediction(policy, env, num_episodes, discount_factor = 1.0):
                 break
             state = next_state
 
-        for state in range(len(states)):
-            if states[state] in states_list:
-                index = states_list.index(states_list[state])
-                return_count[index] += 1
-            else:
-                states_list.append(states[state])
-                return_count.append(1)
-                return_sum.append(sum([x * (discount_factor ** i) for i, x in enumerate(G[state:])]))
-    
-    for state in range(len(states_list)):
-        V.append([states_list[state], round(return_sum[state] / return_count[state], 2)])
-    
-    return np.array(V)
+        states_list = set(states)
+        for state in states_list:
+            index = states.index(state)
+            return_sum[state] += sum([x * (discount_factor ** i) for i, x in enumerate(G[index:])])
+            return_count[state] += 1.0
+            V[state] = return_sum[state] / return_count[state]
+
+    return V
 
 print(monte_carlo_prediction(20, env, 10000, discount_factor = 1.0))
