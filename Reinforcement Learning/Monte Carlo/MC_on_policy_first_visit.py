@@ -1,6 +1,7 @@
 import gym
 import matplotlib
 import numpy as np
+import matplotlib.pyplot as plt
 from collections import defaultdict
 
 env = gym.make('Blackjack-v0')
@@ -18,7 +19,8 @@ def mc_control_epsilon_greedy(env, num_episodes, gamma = 1.0, epsilon = 0.1):
     returns_sum = defaultdict(float)
     returns_count = defaultdict(float)
     Q = defaultdict(lambda: np.zeros(env.action_space.n))
-    policy = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
+    policy = defaultdict(int)
+    policy_step = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
 
     for episode in range(num_episodes):
         state = env.reset()
@@ -27,25 +29,39 @@ def mc_control_epsilon_greedy(env, num_episodes, gamma = 1.0, epsilon = 0.1):
 
         while True:
             states = []
+            actions = []
             rewards = []
             G = 0
 
             states.append(state)
-            action = np.argmax(policy(state))
+            # action = np.random.choice(np.arange(len(policy_step(state))), p = policy_step(state))
+            action = np.argmax(policy_step(state))
+            actions.append(action)
             next_state, reward, complete, _ = env.step(action)
             rewards.append(reward)
-        
             if complete == True:
                 break
             state = next_state
             
-        for step in range(len(states) - 1, -1, -1):
-            G = gamma * G + rewards[step]
+        states_list = set(states)
+        for step in range(len(states_list)):
+            index = states.index(states[step])
+            G = sum([x * (gamma ** i) for i, x in enumerate(rewards[index:])])
             returns_count[states[step]] += 1
-            returns_sum[states[step]] = G
-            Q[states[step]] = returns_sum[states[step]] / returns_count[states[step]]
-            policy = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
+            returns_sum[states[step]] += G
+            Q[states[step]][actions[step]] = returns_sum[states[step]] / returns_count[states[step]]
+            policy[states[step]] = np.argmax(Q[states[step]])
+        policy_step = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
 
-    return Q
+    return Q, policy
 
-print(mc_control_epsilon_greedy(env, 500000, gamma = 1.0, epsilon = 0.1))
+def optimal_V(Q):
+    V = defaultdict(float)
+    for state, actions in Q.items():
+        V[state] = np.max(actions)
+    return V
+
+Q, policy = mc_control_epsilon_greedy(env, 100000, gamma = 1.0, epsilon = 0.1)
+V = optimal_V(Q)
+plot_value_function(V, title="Optimal Value Function")
+plt.show()
