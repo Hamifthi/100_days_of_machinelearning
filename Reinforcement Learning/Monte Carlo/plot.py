@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 from mpl_toolkits.mplot3d import axes3d, Axes3D
 
 # using this repository for ploting address https://github.com/dennybritz/reinforcement-learning
