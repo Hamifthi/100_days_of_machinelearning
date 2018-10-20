@@ -32,19 +32,18 @@ def mc_control_epsilon_greedy(env, num_episodes, gamma = 1.0, epsilon = 0.1):
         state = env.reset()
         while state[0] > 21 and state[0] < 12:
             state = env.reset()
+        states = []
+        actions = []
+        rewards = []
+        G = 0
 
         while True:
-            states = []
-            actions = []
-            rewards = []
-            G = 0
-
             states.append(state)
             action = np.random.choice(np.arange(len(policy_step(state))), p = policy_step(state))
             actions.append(action)
             next_state, reward, complete, _ = env.step(action)
             rewards.append(reward)
-            if complete == True:
+            if complete:
                 break
             state = next_state
             
@@ -66,7 +65,7 @@ def optimal_V(Q):
         V[state] = np.max(actions)
     return V
 
-Q, policy = mc_control_epsilon_greedy(env, 500000, gamma = 1.0, epsilon = 0.1)
+Q, policy = mc_control_epsilon_greedy(env, 100000, gamma = 1.0, epsilon = 0.1)
 V = optimal_V(Q)
 plot_value_function(V, title="Optimal Value Function")
 plt.show()
