@@ -11,7 +11,7 @@ env = gym.make('Blackjack-v0')
 def create_random_policy(nA):
     action_values = np.ones(nA) / nA
     def policy_function(observation):
-        return np.random.choice(len(action_values), p = action_values)
+        return action_values
     return policy_function
 
 def create_greedy_policy(Q):
@@ -20,7 +20,7 @@ def create_greedy_policy(Q):
     return policy_function
 
 def mc_control_importance_sampling(env, num_episodes, behavior_policy, gamma = 1.0):
-    C = defaultdict(float)
+    C = defaultdict(lambda: np.zeros(env.action_space.n))
     Q = defaultdict(lambda: np.zeros(env.action_space.n))
     target_policy = create_greedy_policy(Q)
     policy = defaultdict(int)
@@ -36,7 +36,7 @@ def mc_control_importance_sampling(env, num_episodes, behavior_policy, gamma = 1
         W = 1
 
         while True:
-            action = behavior_policy(state)
+            action = np.random.choice(len(behavior_policy(state)), p = behavior_policy(state))
             next_state, reward, complete, _ = env.step(action)
             episode.append((state, action, reward))
             if complete:
@@ -48,13 +48,21 @@ def mc_control_importance_sampling(env, num_episodes, behavior_policy, gamma = 1
             G = G * gamma + reward
             C[state][action] += W
             Q[state][action] += (W / C[state][action]) * (G - Q[state][action])
+            policy[state] = target_policy(state)
             if action !=  target_policy(state):
                 break
-            W = W * 1. / behavior_policy(state)[action]
-            policy(states[step]) = target_policy(states[step])
-        W = W / behavior_policy
+        W = W * 1. / behavior_policy(state)
+        target_policy = create_greedy_policy(Q)
 
+    return Q, policy
 
+def optimal_V(Q):
+    V = defaultdict(float)
+    for state, actions in Q.items():
+        V[state] = np.max(actions)
+    return V
 
 random_policy = create_random_policy(2)
-print(mc_control_importance_sampling(env, 10, random_policy, gamma = 1.0))
+Q, policy = mc_control_importance_sampling(env, 500000, random_policy, gamma = 1.0)
+V = optimal_V(Q)
+plot_value_function(V, title="Optimal Value Function")
