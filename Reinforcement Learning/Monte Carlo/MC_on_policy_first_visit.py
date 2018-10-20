@@ -8,12 +8,12 @@ from collections import defaultdict
 
 env = gym.make('Blackjack-v0')
 
-def make_epsilon_greedy_policy(Q, epsilon, nA):
-    policy = np.zeros(2)
+def make_epsilon_greedy_policy(Q, epsilon, nA = 2):
     def policy_function(observation):
-        policy = [epsilon/env.action_space.n, epsilon/env.action_space.n]
-        policy[np.argmax(Q[observation])] += 1 - epsilon
-        return policy
+        action_values = np.zeros(nA)
+        action_values = list(map(lambda x: epsilon / nA, action_values))
+        action_values[np.argmax(Q[observation])] += 1 - epsilon
+        return action_values
 
     return policy_function
 
