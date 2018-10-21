@@ -105,4 +105,5 @@ venv.bak/
 
 # files
 ./Mnist_data
-./Reinforcement Learning/policy_evaluation/gridworld.py
+gridworld.py
+**/Reinforcement Learning/**/reinforcement-learning-master/
