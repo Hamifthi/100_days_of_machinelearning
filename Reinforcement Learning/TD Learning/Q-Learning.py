@@ -7,12 +7,12 @@ import sys
 
 sys.path.append('E:/Hamed/Projects/Python/Machine Learning/100DaysOfMachineLearning/Reinforcement Learning/reinforcement-learning-master')
 from collections import defaultdict
-from lib.envs.windy_gridworld import WindyGridworldEnv
+from lib.envs.cliff_walking import CliffWalkingEnv
 from lib import plotting
 
 matplotlib.style.use('ggplot')
 
-env = WindyGridworldEnv()
+env = CliffWalkingEnv()
 
 def make_epsilon_greedy_policy(Q, epsilon, nA):
     def policy_function(observation):
@@ -23,7 +23,7 @@ def make_epsilon_greedy_policy(Q, epsilon, nA):
 
     return policy_function
 
-def sarsa(env, num_episodes, gamma = 1.0, alpha = 0.5, epsilon = 0.1):
+def q_learning(env, num_episodes, gamma = 1.0, alpha = 0.5, epsilon = 0.1):
     Q = defaultdict(lambda: np.zeros(env.action_space.n))
     policy = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
 
@@ -37,19 +37,17 @@ def sarsa(env, num_episodes, gamma = 1.0, alpha = 0.5, epsilon = 0.1):
             sys.stdout.flush()
 
         state = env.reset()
-        action = np.random.choice(np.arange(len(policy(state))), p = policy(state))
         for t in itertools.count():
+            action = np.random.choice(np.arange(len(policy(state))), p = policy(state))
             next_state, reward, complete, _ = env.step(action)
-            next_action = np.random.choice(np.arange(len(policy(next_state))), p = policy(next_state))
             stats.episode_rewards[episode] += reward
             stats.episode_lengths[episode] = t
-            Q[state][action] += alpha * (reward + (gamma * Q[next_state][next_action]) - Q[state][action])
+            Q[state][action] += alpha * (reward + (gamma * np.max(Q[next_state]) - Q[state][action]))
             if complete:
                 break
-            state, action = next_state, next_action
+            state = next_state
 
     return Q, stats
 
-
-Q, stats = sarsa(env, 200, gamma = 1.0, alpha = 0.5, epsilon = 0.1)
+Q, stats = q_learning(env, 500, gamma = 1.0, alpha = 0.5, epsilon = 0.1)
 plotting.plot_episode_stats(stats)
