@@ -24,26 +24,33 @@ def make_epsilon_greedy_policy(Q, epsilon, nA):
     return policy_function
 
 def sarsa(env, num_episodes, gamma = 1.0, alpha = 0.5, epsilon = 0.1):
-    for episode in range(num_episodes):
-        Q = defaultdict(lambda: np.zeros(env.action_space.n))
-        Q[37][0] = 0
-        policy = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
+    Q = defaultdict(lambda: np.zeros(env.action_space.n))
+    policy = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
 
+    stats = plotting.EpisodeStats(
+        episode_lengths=np.zeros(num_episodes),
+        episode_rewards=np.zeros(num_episodes))
+
+    for episode in range(num_episodes):
         if (episode + 1) % 100 == 0:
             print("\rEpisode {}/{}.".format(episode + 1, num_episodes), end="")
             sys.stdout.flush()
 
         state = env.reset()
+        print(policy(state))
         action = np.random.choice(np.arange(len(policy(state))), p = policy(state))
-        while True:
+        for t in itertools.count():
             next_state, reward, complete, _ = env.step(action)
             next_action = np.random.choice(np.arange(len(policy(next_state))), p = policy(next_state))
+            stats.episode_rewards[episode] += reward
+            stats.episode_lengths[episode] = t
             Q[state][action] += alpha * (reward + (gamma * Q[next_state][next_action]) - Q[state][action])
-            state, action = next_state, next_action
-            if state == 37:
+            if complete:
                 break
-        
-    return Q
+            state, action = next_state, next_action
+
+    return Q, stats
 
 
-print(sarsa(env, 100, gamma = 1.0, alpha = 0.5, epsilon = 0.1))
+Q, stats = sarsa(env, 200, gamma = 1.0, alpha = 0.5, epsilon = 0.1)
+plotting.plot_episode_stats(stats)
